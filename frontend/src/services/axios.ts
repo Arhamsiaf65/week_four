@@ -2,7 +2,7 @@ import axios from "axios";
 import { useAuthStore } from "../features/auth/store/authStore";
 
 export const api = axios.create({
-    baseURL: "http://localhost:5000",
+    baseURL: "https://weekfour-production.up.railway.app",
     withCredentials: true, // Crucial for httpOnly refresh cookies
 });
 
