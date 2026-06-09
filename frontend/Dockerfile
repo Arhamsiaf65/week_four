@@ -7,7 +7,12 @@ RUN npm install
 
 COPY . .
 
-# Run preview server or expose vite directly for dev
-EXPOSE 5173
+# Accept build-time env var for the API URL
+ARG VITE_API_URL
+ENV VITE_API_URL=$VITE_API_URL
 
-CMD ["npm", "run", "dev", "--", "--host"]
+RUN npm run build
+
+EXPOSE 8080
+
+CMD ["npm", "run", "preview", "--", "--host", "0.0.0.0", "--port", "8080"]
