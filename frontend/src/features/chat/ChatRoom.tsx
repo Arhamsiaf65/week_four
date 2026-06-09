@@ -48,6 +48,9 @@ export const ChatRoom: React.FC<{ userName: string }> = ({ userName }) => {
       setSearchParams({ room: room.id }, { replace: true });
     });
 
+    // Request the latest public room list after listeners are registered
+    socket.emit("get_public_rooms");
+
     socket.on("room_joined", (room: RoomInfo) => {
       setActiveRoom(room);
       setMessages([]);

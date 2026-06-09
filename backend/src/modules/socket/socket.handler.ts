@@ -24,6 +24,12 @@ export const initializeSocket = (io: Server) => {
     const publicRooms = Array.from(activeRooms.values()).filter(r => !r.isPrivate);
     socket.emit("update_public_rooms", publicRooms);
 
+    // Handle public room list requests from clients
+    socket.on("get_public_rooms", () => {
+      const rooms = Array.from(activeRooms.values()).filter(r => !r.isPrivate);
+      socket.emit("update_public_rooms", rooms);
+    });
+
     // Create a new room
     socket.on("create_room", (data: { name: string; isPrivate: boolean; user: string }) => {
       const roomId = randomUUID();
