@@ -11,9 +11,7 @@ import {
     Trash2,
     Edit,
     Plus,
-    X,
     Loader2,
-    Sparkles,
 } from "lucide-react";
 
 import { useMeQuery } from "../../auth/hooks/useMeQuery";

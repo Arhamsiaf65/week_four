@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useRef } from "react";
-import { useSearchParams, useNavigate } from "react-router-dom";
+import { useSearchParams} from "react-router-dom";
 import { Copy, Check, Users, Lock, Unlock, ArrowLeft } from "lucide-react";
 import { socket } from "../../services/socket";
 
@@ -18,7 +18,6 @@ interface RoomInfo {
 
 export const ChatRoom: React.FC<{ userName: string }> = ({ userName }) => {
   const [searchParams, setSearchParams] = useSearchParams();
-  const navigate = useNavigate();
 
   // Lobby State
   const [publicRooms, setPublicRooms] = useState<RoomInfo[]>([]);
