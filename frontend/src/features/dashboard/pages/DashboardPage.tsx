@@ -223,9 +223,7 @@ export const DashboardPage: React.FC = () => {
 
             {/* Navbar */}
             <nav className="sticky top-0 z-50 bg-surface-strong backdrop-blur-lg border-b border-surface px-10 py-4 flex justify-between items-center shadow-sm">
-                <div className="flex items-center gap-2 font-bold text-xl text-slate-100">
-                    <span className="brand-logo text-3xl">Auth Dashboard</span>
-                </div>
+
                 <div className="flex items-center gap-4">
                     <div className="flex items-center gap-2 bg-panel-alt px-3 py-1.5 rounded-full border border-surface text-sm font-semibold text-slate-100 shadow-sm">
                         <UserIcon size={14} className="text-burgundy-900" />

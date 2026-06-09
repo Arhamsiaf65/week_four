@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useRef } from "react";
-import { useSearchParams} from "react-router-dom";
-import { Copy, Check, Users, Lock, Unlock, ArrowLeft } from "lucide-react";
+import { useSearchParams } from "react-router-dom";
+import { Copy, Check, Users, Lock, Unlock, ArrowLeft, KeyRound, LogIn } from "lucide-react";
 import { socket } from "../../services/socket";
 
 interface Message {
@@ -25,12 +25,17 @@ export const ChatRoom: React.FC<{ userName: string }> = ({ userName }) => {
   const [newRoomName, setNewRoomName] = useState("");
   const [isPrivate, setIsPrivate] = useState(false);
 
+  // Private Room Join State
+  const [privateRoomId, setPrivateRoomId] = useState("");
+  const [isJoiningPrivate, setIsJoiningPrivate] = useState(false);
+
   // Active Room State
   const [activeRoom, setActiveRoom] = useState<RoomInfo | null>(null);
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
   const [errorMsg, setErrorMsg] = useState("");
   const [copied, setCopied] = useState(false);
+  const [copiedId, setCopiedId] = useState(false);
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
@@ -43,23 +48,24 @@ export const ChatRoom: React.FC<{ userName: string }> = ({ userName }) => {
       setActiveRoom(room);
       setMessages([]);
       setErrorMsg("");
-      // Update URL so it can be shared easily
       setSearchParams({ room: room.id }, { replace: true });
     });
 
-    // Request the latest public room list after listeners are registered
     socket.emit("get_public_rooms");
 
     socket.on("room_joined", (room: RoomInfo) => {
       setActiveRoom(room);
       setMessages([]);
       setErrorMsg("");
+      setIsJoiningPrivate(false);
+      setPrivateRoomId("");
       setSearchParams({ room: room.id }, { replace: true });
     });
 
     socket.on("room_error", (data: { message: string }) => {
       setErrorMsg(data.message);
       setActiveRoom(null);
+      setIsJoiningPrivate(false);
       setSearchParams({});
     });
 
@@ -95,15 +101,24 @@ export const ChatRoom: React.FC<{ userName: string }> = ({ userName }) => {
     socket.emit("create_room", {
       name: newRoomName,
       isPrivate,
-      user: userName || "Anonymous"
+      user: userName || "Anonymous",
     });
     setIsCreating(false);
     setNewRoomName("");
     setIsPrivate(false);
   };
 
-  const handleJoinRoom = (roomId: string) => {
+  const handleJoinPublicRoom = (roomId: string) => {
+    setErrorMsg("");
     socket.emit("join_room", roomId);
+  };
+
+  const handleJoinPrivateRoom = (e: React.FormEvent) => {
+    e.preventDefault();
+    const trimmed = privateRoomId.trim();
+    if (!trimmed) return;
+    setErrorMsg("");
+    socket.emit("join_room", trimmed);
   };
 
   const handleLeaveRoom = () => {
@@ -112,13 +127,13 @@ export const ChatRoom: React.FC<{ userName: string }> = ({ userName }) => {
     }
     setActiveRoom(null);
     setMessages([]);
-    setSearchParams({}); // remove from URL
+    setErrorMsg("");
+    setSearchParams({});
   };
 
   const handleSendMessage = (e: React.FormEvent) => {
     e.preventDefault();
     if (!input.trim() || !activeRoom) return;
-
     socket.emit("send_message", {
       roomId: activeRoom.id,
       user: userName || "Anonymous",
@@ -127,7 +142,7 @@ export const ChatRoom: React.FC<{ userName: string }> = ({ userName }) => {
     setInput("");
   };
 
-  const handleCopyLink = () => {
+  const handleCopyInviteLink = () => {
     if (!activeRoom) return;
     const link = `${window.location.origin}/dashboard?room=${activeRoom.id}`;
     navigator.clipboard.writeText(link).then(() => {
@@ -136,13 +151,25 @@ export const ChatRoom: React.FC<{ userName: string }> = ({ userName }) => {
     });
   };
 
+  const handleCopyRoomId = () => {
+    if (!activeRoom) return;
+    navigator.clipboard.writeText(activeRoom.id).then(() => {
+      setCopiedId(true);
+      setTimeout(() => setCopiedId(false), 2000);
+    });
+  };
+
   return (
-    <div className="bg-surface-strong border border-surface rounded-2xl shadow-md hover:shadow-lg transition-shadow flex flex-col h-[600px] overflow-hidden">
+    <div className="bg-surface-strong border border-surface rounded-2xl shadow-md hover:shadow-lg transition-shadow flex flex-col h-[620px] overflow-hidden">
       {/* HEADER */}
       <div className="bg-panel-alt px-6 py-4 border-b border-[rgba(255,255,255,0.08)] flex justify-between items-center">
         <div className="flex items-center gap-3">
           {activeRoom && (
-            <button onClick={handleLeaveRoom} className="p-1 hover:bg-surface rounded-full text-slate-300 transition-colors">
+            <button
+              onClick={handleLeaveRoom}
+              className="p-1 hover:bg-surface rounded-full text-slate-300 transition-colors"
+              title="Back to Lobby"
+            >
               <ArrowLeft size={18} />
             </button>
           )}
@@ -157,15 +184,30 @@ export const ChatRoom: React.FC<{ userName: string }> = ({ userName }) => {
             )}
           </h3>
         </div>
-        
+
+        {/* Active room actions */}
         {activeRoom && (
-          <button
-            onClick={handleCopyLink}
-            className="flex items-center gap-2 text-xs font-semibold px-3 py-1.5 rounded bg-surface hover:bg-surface-soft border border-[rgba(255,255,255,0.1)] transition-colors text-slate-200"
-          >
-            {copied ? <Check size={14} className="text-green-400" /> : <Copy size={14} />}
-            {copied ? "Copied!" : "Copy Invite Link"}
-          </button>
+          <div className="flex items-center gap-2">
+            {/* For private rooms: show copy Room ID */}
+            {activeRoom.isPrivate && (
+              <button
+                onClick={handleCopyRoomId}
+                className="flex items-center gap-2 text-xs font-semibold px-3 py-1.5 rounded bg-surface hover:bg-surface-soft border border-[rgba(255,255,255,0.1)] transition-colors text-slate-200"
+                title="Copy Room ID to share with others"
+              >
+                {copiedId ? <Check size={14} className="text-green-400" /> : <KeyRound size={14} className="text-gold-400" />}
+                {copiedId ? "ID Copied!" : "Copy Room ID"}
+              </button>
+            )}
+            {/* Invite link for all rooms */}
+            <button
+              onClick={handleCopyInviteLink}
+              className="flex items-center gap-2 text-xs font-semibold px-3 py-1.5 rounded bg-surface hover:bg-surface-soft border border-[rgba(255,255,255,0.1)] transition-colors text-slate-200"
+            >
+              {copied ? <Check size={14} className="text-green-400" /> : <Copy size={14} />}
+              {copied ? "Copied!" : "Copy Link"}
+            </button>
+          </div>
         )}
       </div>
 
@@ -178,10 +220,14 @@ export const ChatRoom: React.FC<{ userName: string }> = ({ userName }) => {
       {/* LOBBY VIEW */}
       {!activeRoom ? (
         <div className="flex-1 p-6 overflow-y-auto flex flex-col gap-6">
+
+          {/* ── Create Room ─────────────────────────────── */}
           <div className="flex justify-between items-center">
-            <h4 className="text-slate-200 font-semibold uppercase text-xs tracking-wider">Active Public Rooms</h4>
+            <h4 className="text-slate-200 font-semibold uppercase text-xs tracking-wider">
+              Active Public Rooms
+            </h4>
             <button
-              onClick={() => setIsCreating(!isCreating)}
+              onClick={() => { setIsCreating(!isCreating); setIsJoiningPrivate(false); }}
               className="bg-gold-600 text-white text-xs font-bold px-3 py-1.5 rounded hover:bg-gold-700 transition-colors"
             >
               {isCreating ? "Cancel" : "+ Create Room"}
@@ -189,7 +235,10 @@ export const ChatRoom: React.FC<{ userName: string }> = ({ userName }) => {
           </div>
 
           {isCreating && (
-            <form onSubmit={handleCreateRoom} className="bg-surface border border-surface rounded-lg p-4 flex flex-col gap-3">
+            <form
+              onSubmit={handleCreateRoom}
+              className="bg-surface border border-surface rounded-lg p-4 flex flex-col gap-3"
+            >
               <div>
                 <label className="block text-xs text-slate-400 mb-1">Room Name</label>
                 <input
@@ -209,16 +258,24 @@ export const ChatRoom: React.FC<{ userName: string }> = ({ userName }) => {
                   onChange={(e) => setIsPrivate(e.target.checked)}
                   className="accent-gold-500 w-4 h-4"
                 />
-                <label htmlFor="private-toggle" className="text-sm text-slate-300 select-none cursor-pointer">
+                <label
+                  htmlFor="private-toggle"
+                  className="text-sm text-slate-300 select-none cursor-pointer flex items-center gap-1.5"
+                >
+                  <Lock size={12} className="text-gold-400" />
                   Make Private (Hidden from Lobby)
                 </label>
               </div>
-              <button type="submit" className="bg-burgundy-900 text-white text-sm font-bold px-4 py-2 rounded hover:bg-burgundy-800 transition-colors self-end mt-2">
+              <button
+                type="submit"
+                className="bg-burgundy-900 text-white text-sm font-bold px-4 py-2 rounded hover:bg-burgundy-800 transition-colors self-end mt-2"
+              >
                 Create & Join
               </button>
             </form>
           )}
 
+          {/* ── Public Room List ─────────────────────────── */}
           <div className="grid gap-3">
             {publicRooms.length === 0 ? (
               <p className="text-surface-muted text-sm italic text-center py-8 bg-surface-strong/50 rounded-lg border border-dashed border-surface">
@@ -226,13 +283,19 @@ export const ChatRoom: React.FC<{ userName: string }> = ({ userName }) => {
               </p>
             ) : (
               publicRooms.map((room) => (
-                <div key={room.id} className="bg-surface border border-surface rounded-lg p-4 flex justify-between items-center hover:border-gold-500/30 transition-colors">
+                <div
+                  key={room.id}
+                  className="bg-surface border border-surface rounded-lg p-4 flex justify-between items-center hover:border-gold-500/30 transition-colors"
+                >
                   <div>
-                    <h5 className="text-slate-100 font-semibold">{room.name}</h5>
+                    <h5 className="text-slate-100 font-semibold flex items-center gap-2">
+                      <Unlock size={12} className="text-slate-400" />
+                      {room.name}
+                    </h5>
                     <p className="text-xs text-surface-muted mt-1">Host: {room.createdBy}</p>
                   </div>
                   <button
-                    onClick={() => handleJoinRoom(room.id)}
+                    onClick={() => handleJoinPublicRoom(room.id)}
                     className="bg-panel-alt text-slate-200 border border-[rgba(255,255,255,0.1)] text-xs font-bold px-4 py-2 rounded hover:bg-surface-soft transition-colors"
                   >
                     Join Room
@@ -241,43 +304,94 @@ export const ChatRoom: React.FC<{ userName: string }> = ({ userName }) => {
               ))
             )}
           </div>
+
+          {/* ── Join Private Room ────────────────────────── */}
+          <div className="border-t border-[rgba(255,255,255,0.07)] pt-4">
+            <div className="flex justify-between items-center mb-3">
+              <h4 className="text-slate-200 font-semibold uppercase text-xs tracking-wider flex items-center gap-1.5">
+                <Lock size={11} className="text-gold-400" />
+                Join Private Room
+              </h4>
+              <button
+                onClick={() => { setIsJoiningPrivate(!isJoiningPrivate); setIsCreating(false); }}
+                className="text-xs text-gold-400 hover:text-gold-300 font-semibold transition-colors"
+              >
+                {isJoiningPrivate ? "Cancel" : "Enter Room ID →"}
+              </button>
+            </div>
+
+            {isJoiningPrivate ? (
+              <form onSubmit={handleJoinPrivateRoom} className="flex gap-2">
+                <input
+                  type="text"
+                  value={privateRoomId}
+                  onChange={(e) => setPrivateRoomId(e.target.value)}
+                  placeholder="Paste Room ID here..."
+                  className="flex-1 bg-surface border border-surface focus:border-gold-500 rounded px-3 py-2 text-sm text-slate-200 outline-none"
+                  autoFocus
+                />
+                <button
+                  type="submit"
+                  disabled={!privateRoomId.trim()}
+                  className="flex items-center gap-2 bg-gold-600 text-white text-sm font-bold px-4 py-2 rounded hover:bg-gold-700 disabled:opacity-50 transition-colors"
+                >
+                  <LogIn size={14} />
+                  Join
+                </button>
+              </form>
+            ) : (
+              <p className="text-xs text-surface-muted">
+                Have a private room invite? Click <span className="text-gold-400 font-semibold">Enter Room ID</span> above and paste the Room ID shared with you.
+              </p>
+            )}
+          </div>
         </div>
       ) : (
-        /* ACTIVE CHAT VIEW */
+        /* ── ACTIVE CHAT VIEW ────────────────────────── */
         <>
           <div className="flex-1 overflow-y-auto p-6 space-y-4 bg-[#111116]">
             {messages.length === 0 ? (
               <div className="flex flex-col items-center justify-center h-full text-surface-muted">
                 <Users size={32} className="mb-3 opacity-20" />
                 <p>Welcome to {activeRoom.name}!</p>
-                <p className="text-sm mt-1 text-slate-500">Share the link above to invite others.</p>
+                <p className="text-sm mt-1 text-slate-500">
+                  {activeRoom.isPrivate
+                    ? "Share the Room ID or invite link to let others join."
+                    : "Share the invite link above to invite others."}
+                </p>
               </div>
             ) : (
               messages.map((msg, idx) => {
                 const isSystem = msg.user === "System";
                 const isMe = msg.user === userName;
-                
+
                 if (isSystem) {
                   return (
-                     <div key={idx} className="text-center my-4">
-                       <span className="bg-surface text-surface-muted text-[10px] uppercase tracking-wider px-3 py-1 rounded-full border border-surface">
-                         {msg.text}
-                       </span>
-                     </div>
+                    <div key={idx} className="text-center my-4">
+                      <span className="bg-surface text-surface-muted text-[10px] uppercase tracking-wider px-3 py-1 rounded-full border border-surface">
+                        {msg.text}
+                      </span>
+                    </div>
                   );
                 }
 
                 return (
                   <div key={idx} className={`flex flex-col ${isMe ? "items-end" : "items-start"}`}>
-                    {!isMe && <span className="text-[10px] font-bold text-slate-400 mb-1 ml-2 uppercase tracking-wide">{msg.user}</span>}
-                    <div className={`max-w-[80%] rounded-2xl px-4 py-2.5 shadow-sm ${
-                      isMe 
-                        ? "bg-burgundy-900 text-white rounded-tr-sm" 
-                        : "bg-surface-strong text-slate-200 border border-surface rounded-tl-sm"
-                    }`}>
+                    {!isMe && (
+                      <span className="text-[10px] font-bold text-slate-400 mb-1 ml-2 uppercase tracking-wide">
+                        {msg.user}
+                      </span>
+                    )}
+                    <div
+                      className={`max-w-[80%] rounded-2xl px-4 py-2.5 shadow-sm ${
+                        isMe
+                          ? "bg-burgundy-900 text-white rounded-tr-sm"
+                          : "bg-surface-strong text-slate-200 border border-surface rounded-tl-sm"
+                      }`}
+                    >
                       <p className="text-sm leading-relaxed whitespace-pre-wrap">{msg.text}</p>
                       <span className={`text-[10px] block mt-1.5 ${isMe ? "text-burgundy-200" : "text-slate-500"} text-right`}>
-                        {new Date(msg.time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                        {new Date(msg.time).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
                       </span>
                     </div>
                   </div>
@@ -287,7 +401,10 @@ export const ChatRoom: React.FC<{ userName: string }> = ({ userName }) => {
             <div ref={messagesEndRef} />
           </div>
 
-          <form onSubmit={handleSendMessage} className="bg-panel-alt p-4 border-t border-[rgba(255,255,255,0.05)] flex gap-3 items-center">
+          <form
+            onSubmit={handleSendMessage}
+            className="bg-panel-alt p-4 border-t border-[rgba(255,255,255,0.05)] flex gap-3 items-center"
+          >
             <input
               type="text"
               value={input}
