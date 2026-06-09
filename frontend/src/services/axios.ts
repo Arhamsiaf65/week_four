@@ -2,7 +2,7 @@ import axios from "axios";
 import { useAuthStore } from "../features/auth/store/authStore";
 
 export const api = axios.create({
-    baseURL: "https://weekfour-production.up.railway.app",
+    baseURL: "dashboard-production-61f9.up.railway.app",
     withCredentials: true, // Crucial for httpOnly refresh cookies
 });
 
