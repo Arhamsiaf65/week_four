@@ -100,8 +100,9 @@ const AppContent: React.FC = () => {
     useEffect(() => {
         const attemptSilentRefresh = async () => {
             try {
+                const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000";
                 const response = await axios.post(
-                    "http://localhost:5000/auth/refresh",
+                    `${API_URL}/auth/refresh`,
                     {},
                     { withCredentials: true }
                 );

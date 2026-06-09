@@ -1,8 +1,10 @@
 import axios from "axios";
 import { useAuthStore } from "../features/auth/store/authStore";
 
+const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000";
+
 export const api = axios.create({
-    baseURL: "dashboard-production-61f9.up.railway.app",
+    baseURL: API_URL,
     withCredentials: true, // Crucial for httpOnly refresh cookies
 });
 
@@ -74,7 +76,7 @@ api.interceptors.request.use(
                 try {
                     // Call refresh endpoint to get new access token from httpOnly cookie
                     const response = await axios.post(
-                        "http://localhost:5000/auth/refresh",
+                        `${API_URL}/auth/refresh`,
                         {},
                         { withCredentials: true }
                     );
