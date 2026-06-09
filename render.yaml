@@ -14,6 +14,11 @@ services:
         generateValue: true
       - key: PORT
         value: "5000"
+      - key: FRONTEND_URL
+        fromService:
+          type: web
+          name: week4-frontend
+          envVarKey: RENDER_EXTERNAL_URL
 
   - type: web
     name: week4-frontend
