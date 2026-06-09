@@ -1,0 +1,242 @@
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap');
+@import "tailwindcss";
+
+
+@font-face {
+  font-family: "Moonwalk";
+  src: url("./assets/fonts/Moonwalk.ttf") format("truetype");
+  font-weight: normal;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: "Bumble";
+  src: url("./assets/fonts/bumble-medium.otf") format("truetype");
+  font-weight: normal;
+  font-style: normal;
+}
+
+@theme {
+  /* Primary Brand Colors */
+  --color-burgundy: #780115;
+  --color-gold: #f7b638;
+
+  /* Burgundy Scale */
+  --color-burgundy-50: #fff0f2;
+  --color-burgundy-100: #ffe1e5;
+  --color-burgundy-200: #ffc7d0;
+  --color-burgundy-300: #ffa0b0;
+  --color-burgundy-400: #ff6a85;
+  --color-burgundy-500: #f83b5e;
+  --color-burgundy-600: #e21c45;
+  --color-burgundy-700: #be1131;
+  --color-burgundy-800: #9e112e;
+  --color-burgundy-900: #780115;
+  --color-burgundy-950: #490008;
+
+  /* Gold Scale */
+  --color-gold-50: #fff9eb;
+  --color-gold-100: #ffefc6;
+  --color-gold-200: #ffe18b;
+  --color-gold-300: #ffd14a;
+  --color-gold-400: #f7b638;
+  --color-gold-500: #ec980a;
+  --color-gold-600: #cc7503;
+  --color-gold-700: #a95605;
+  --color-gold-800: #88430b;
+  --color-gold-900: #6f370f;
+  --color-gold-950: #401b04;
+
+  /* Semantic Colors */
+  --color-success: #22c55e;
+  --color-warning: #f7b638;
+  --color-danger: #dc2626;
+
+  /* Luxury Burgundy Surfaces */
+  --color-surface: rgba(73, 0, 8, 0.92);
+  --color-surface-soft: rgba(120, 1, 21, 0.80);
+  --color-surface-strong: rgba(65, 0, 5, 1);
+
+  --color-panel: rgba(120, 1, 21, 0.72);
+  --color-panel-alt: rgba(247, 182, 56, 0.06);
+
+
+  /* Typography */
+  --font-sans: 'Bubmle', system-ui;
+  --font-heading: 'Outfit', system-ui, sans-serif;
+  --font-logo: 'Bumble', 'Moonwalk',  var(--font-heading);
+}
+
+@layer utilities {
+  .bg-surface {
+    background-color: var(--color-surface);
+  }
+
+  .bg-surface-soft {
+    background-color: var(--color-gold-600);
+  }
+
+  .bg-surface-strong {
+    background-color: var(--color-surface-strong);
+  }
+
+  .bg-panel {
+    background-color: var(--color-panel);
+  }
+
+  .bg-panel-alt {
+    background-color: var(--color-panel-alt);
+  }
+
+  .border-surface {
+    border-color: rgba(247, 182, 56, 0.18);
+  }
+
+  .text-surface-muted {
+    color: #e7d3d7;
+  }
+
+  .text-gold-gradient {
+    background: linear-gradient(
+      135deg,
+      var(--color-gold-300),
+      var(--color-gold-500)
+    );
+    background-clip: text;
+    -webkit-background-clip: text;
+    color: transparent;
+  }
+
+  .bg-luxury-gradient {
+    background: linear-gradient(
+      135deg,
+      var(--color-burgundy-950),
+      var(--color-burgundy-900),
+      var(--color-burgundy-800)
+    );
+  }
+
+  .bg-gold-gradient {
+    background: linear-gradient(
+      135deg,
+      var(--color-gold-300),
+      var(--color-gold-500)
+    );
+  }
+
+  .shadow-luxury {
+    box-shadow:
+      0 10px 30px rgba(0, 0, 0, 0.35),
+      0 0 20px rgba(247, 182, 56, 0.08);
+  }
+
+  .glass-panel {
+    background: rgba(120, 1, 21, 0.15);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+    border: 1px solid rgba(247, 182, 56, 0.15);
+  }
+
+  /* Reusable components */
+}
+
+@layer components {
+  .btn-primary {
+    @apply inline-flex items-center justify-center gap-2 bg-gradient-to-r from-burgundy-900 to-burgundy-800 text-white font-semibold rounded-lg shadow-md hover:shadow-lg hover:-translate-y-0.5 transition-all disabled:opacity-70 disabled:transform-none;
+    padding: 0.625rem 1rem; /* fallback padding for non-tailwind-aware editors */
+  }
+
+  .btn-danger {
+    @apply inline-flex items-center justify-center gap-2 bg-red-500 hover:bg-red-600 text-white font-semibold rounded-lg shadow-sm hover:shadow transition-all disabled:opacity-70;
+    padding: 0.625rem 1rem;
+  }
+
+  .input-field {
+    @apply w-full bg-surface border border-surface rounded-lg py-2.5 px-3 text-slate-100 text-sm transition-all focus:outline-none focus:ring-4 focus:bg-panel-alt;
+  }
+
+  /* Logo / Brand utility */
+  .brand-logo {
+    font-family: var(--font-logo);
+    font-weight: 800;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    background: linear-gradient(90deg, var(--color-gold-300), var(--color-burgundy-600));
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    display: inline-block;
+    line-height: 1;
+  }
+}
+
+@layer base {
+  * {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+  }
+
+  html {
+    scroll-behavior: smooth;
+  }
+
+  body {
+    font-family: var(--font-sans);
+    min-height: 100vh;
+    color: #faf7f8;
+
+    background:
+      radial-gradient(
+        circle at top,
+        rgba(247, 182, 56, 0.12),
+        transparent 30%
+      ),
+      linear-gradient(
+        135deg,
+        var(--color-burgundy-950),
+        var(--color-burgundy-900),
+        #250004
+      );
+
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  ::selection {
+    background: rgba(247, 182, 56, 0.3);
+    color: var(--color-burgundy-950);
+  }
+
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
+    font-family: var(--font-heading);
+    font-weight: 700;
+    letter-spacing: -0.02em;
+  }
+
+  a {
+    color: inherit;
+    text-decoration: none;
+  }
+
+  img {
+    max-width: 100%;
+    display: block;
+  }
+
+  button {
+    cursor: pointer;
+    font: inherit;
+  }
+
+  input,
+  textarea,
+  select {
+    font: inherit;
+  }
+}
